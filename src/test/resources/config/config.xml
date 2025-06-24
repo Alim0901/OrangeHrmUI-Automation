@@ -1,0 +1,10 @@
+<configuration>
+    <Url>https://opensource-demo.orangehrmlive.com/</Url>
+    <browser>chrome</browser>
+    <headless>false</headless>
+    <!-- window size is used when run on headless mode, otherwise will maximise to screen resolution -->
+    <windowSize>1920,1080</windowSize>
+    <implicitWait>5</implicitWait>
+    <ScreenShotOnFail>true</ScreenShotOnFail>
+    <ScreenShotOnPass>true</ScreenShotOnPass>
+</configuration>
