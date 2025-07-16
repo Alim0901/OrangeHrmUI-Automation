@@ -54,24 +54,24 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: allure-html
+          path: public
 
-      # 2️⃣ Prepare for GitHub Pages
-      - run: |
-          mkdir public
-          mv target/site/allure-maven-plugin/* public/
-
-      # 3️⃣ Configure GitHub Pages and deploy
+      # 2️⃣ Configure GitHub Pages
       - uses: actions/configure-pages@v5
+
+      # 3️⃣ Upload pages artifact
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public
+
+      # 4️⃣ Deploy to GitHub Pages
       - uses: actions/deploy-pages@v4
 
-      # 4️⃣ Comment PR with Allure report link
+      # 5️⃣ Comment PR with report link
       - name: Comment with report link
         if: ${{ github.event_name == 'pull_request' }}
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
             ✅ **Allure Report is Ready!**
-            🔗 [View Allure Report](https://<your-username>.github.io/<your-repo>/)
+            🔗 [View Allure Report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/)
