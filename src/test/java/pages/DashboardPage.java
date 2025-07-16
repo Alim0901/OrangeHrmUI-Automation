@@ -1,35 +1,38 @@
 package pages;
 
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.FindBy;
-import org.openqa.selenium.support.PageFactory;
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.WaitForSelectorState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import utils.WaitUtils;
-
 
 public class DashboardPage {
 
-    WebDriver driver;
+    private final Page page;
+    private final Locator dashboardHeader;
+    private final Locator selectedSideNavTab;
+    private final Locator logoutLink;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardPage.class);
 
-    public DashboardPage(WebDriver driver) {
-        this.driver = driver;
-        PageFactory.initElements(driver, this);
+    public DashboardPage(Page page) {
+        this.page = page;
+        this.dashboardHeader = page.locator("//h6[text()='Dashboard']");
+        this.selectedSideNavTab = page.locator("//a[contains(@class, 'active')]/span");
+        this.logoutLink = page.locator("//a[text()='Logout']");
     }
-
-    @FindBy(xpath = "//h6[text()='Dashboard']")
-    private WebElement dashboardHeader;
-
-    @FindBy(xpath = "//a[contains(@class, 'active')]/span")
-    private WebElement selectedSideNavTab;
-
-    @FindBy(xpath = "//a[text()='Logout']")
-    private WebElement logoutLink;
 
     public boolean isUserOnDashboardPage() {
-        WaitUtils.waitForVisibility(driver, dashboardHeader, 10);
-        return dashboardHeader.isDisplayed();
+        try {
+            dashboardHeader.waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.VISIBLE)   // wait until visible
+                    .setTimeout(10_000));                    // milliseconds
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("Dashboard header not visible within timeout.", e);
+            return false;
+        }
     }
+
+
 }

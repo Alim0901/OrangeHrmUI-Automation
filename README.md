@@ -4,7 +4,7 @@ This project is a test automation framework using Java, Selenium WebDriver, Cucu
 This framework is built using Java 17 and is compatible with Java 17 or later versions.
 ## 📁 Project Structure
 
-- `src/test/java` - Step definitions, pages, utils, TestSuite
+- `src/test/java` - Step definitions, pages, utils, runner.TestSuite
 - `src/test/resources` - Feature files, config, test data
 - `pom.xml` - Maven dependencies and plugins
 
@@ -39,7 +39,7 @@ Tests can be executed in two ways:
 -  Right-click anywhere inside a .feature file in IntelliJ and select "Run" to execute just that scenario or feature.
 2. **Using Tags via the Test Runner class**
 - Scenarios can be grouped and executed using tags like @smoke, @regression, etc.
-- The @CucumberOptions in TestSuite.java handles tag-based execution.
+- The @CucumberOptions in runner.TestSuite.java handles tag-based execution.
 
 ## 📄 Reports
 

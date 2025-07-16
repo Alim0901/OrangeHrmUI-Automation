@@ -2,13 +2,14 @@ package utils;
 
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.reporter.ExtentSparkReporter;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.TakesScreenshot;
-import org.openqa.selenium.WebDriver;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.ScreenshotType;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -16,27 +17,29 @@ public class ReportScreenshotUtils {
 
     private static ExtentReports extent;
 
-    // For attaching screenshots to Cucumber report
-    public static byte[] takeScreenshot(WebDriver driver, String scenarioName) {
-        return ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
+    /* ───────────── Screenshot helpers ───────────── */
+
+    /** Attach screenshot bytes to Cucumber report */
+    public static byte[] takeScreenshot(Page page, String scenarioName) {
+        return page.screenshot(new Page.ScreenshotOptions()
+                .setFullPage(true)
+                .setType(ScreenshotType.PNG));
     }
 
-    // For saving screenshots as file (for ExtentReport or archiving)
-    public static String takeScreenshotAsFile(WebDriver driver, String scenarioName) {
-        File src = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+    /** Save screenshot as file (for Extent or archival) and return the path */
+    public static String takeScreenshotAsFile(Page page, String scenarioName) {
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmssSSS").format(new Date());
-        String destPath = "target/screenshots/" + scenarioName + "_" + timestamp + ".png";
+        String destPath  = "target/screenshots/" + scenarioName + "_" + timestamp + ".png";
 
         try {
-            File destFile = new File(destPath);
-            destFile.getParentFile().mkdirs();
+            Path path = Paths.get(destPath);
+            Files.createDirectories(path.getParent());
 
-            // Delete if already exists
-            if (Files.exists(destFile.toPath())) {
-                Files.delete(destFile.toPath());
-            }
+            page.screenshot(new Page.ScreenshotOptions()
+                    .setPath(path)
+                    .setFullPage(true)
+                    .setType(ScreenshotType.PNG));
 
-            Files.copy(src.toPath(), destFile.toPath());
             return destPath;
         } catch (IOException e) {
             e.printStackTrace();
@@ -44,13 +47,14 @@ public class ReportScreenshotUtils {
         }
     }
 
-    // Singleton instance for ExtentReports
+    /* ───────────── ExtentReports singleton ───────────── */
+
     public static ExtentReports getInstance() {
         if (extent == null) {
             ExtentSparkReporter spark = new ExtentSparkReporter("target/ExtentReport.html");
             extent = new ExtentReports();
             extent.attachReporter(spark);
-            extent.setSystemInfo("Framework", "JUnit + Cucumber");
+            extent.setSystemInfo("Framework", "Playwright + Cucumber");
         }
         return extent;
     }

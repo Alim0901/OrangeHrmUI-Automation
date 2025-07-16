@@ -1,36 +1,31 @@
 package pages;
 
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.FindBy;
-import org.openqa.selenium.support.PageFactory;
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import utils.WaitUtils;
 
 public class CommonPage {
 
-    WebDriver driver;
+    private final Page page;
+    private final Locator userDropdownBtn;
+    private final Locator logOutBtn;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(CommonPage.class);
 
-    public CommonPage(WebDriver driver) {
-        this.driver = driver;
-        PageFactory.initElements(driver, this);
+    public CommonPage(Page page) {
+        this.page = page;
+        this.userDropdownBtn = page.locator("//li[contains(@class, 'userdropdown')]");
+        this.logOutBtn = page.locator("//li/a[text()='Logout']");
     }
-
-    @FindBy(xpath = "//li[contains(@class, 'userdropdown')]")
-    private WebElement userDropdownBtn;
-
-    @FindBy(xpath = "//li/a[text()='Logout']")
-    private WebElement logOutBtn;
 
     public void logout() {
         try {
-            WaitUtils.waitForVisibility(driver, userDropdownBtn, 10);
+            userDropdownBtn.waitFor(); // auto-wait for visible + enabled
             userDropdownBtn.click();
             LOGGER.info("PASS: User clicked user dropdown button on the page.");
 
-            WaitUtils.waitForVisibility(driver, logOutBtn, 10);
+            logOutBtn.waitFor();
             logOutBtn.click();
             LOGGER.info("PASS: User clicked logout button on the page.");
         } catch (Exception e) {
@@ -38,6 +33,4 @@ public class CommonPage {
             throw new RuntimeException("Logout failed", e);
         }
     }
-
 }
-

@@ -12,19 +12,31 @@
         <maven.compiler.release>24</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cucumber.version>7.16.1</cucumber.version>
-        <selenium.version>4.21.0</selenium.version>
-        <junit.version>4.13.2</junit.version>
+        <allure.version>2.29.0</allure.version>
+        <aspectj.version>1.9.22</aspectj.version>
+        <junitEngine.version>7.17.0</junitEngine.version>
+        <junitJupiter.version>5.11.0</junitJupiter.version>
         <org.slf4j.simpleLogger.defaultLogLevel>debug</org.slf4j.simpleLogger.defaultLogLevel>
     </properties>
-
+<dependencyManagement>
     <dependencies>
-
-        <!-- Selenium -->
         <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-java</artifactId>
-            <version>${selenium.version}</version>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-bom</artifactId>
+            <version>${allure.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
         </dependency>
+    </dependencies>
+</dependencyManagement>
+    <dependencies>
+        <!--playwright-->
+        <dependency>
+            <groupId>com.microsoft.playwright</groupId>
+            <artifactId>playwright</artifactId>
+            <version>1.53.0</version> <!-- or latest -->
+        </dependency>
+
 
         <!-- Cucumber Java -->
         <dependency>
@@ -33,27 +45,23 @@
             <version>${cucumber.version}</version>
         </dependency>
 
-        <!-- Cucumber JUnit -->
+        <!-- Cucumber JUnit platform-engine-->
+
         <dependency>
             <groupId>io.cucumber</groupId>
-            <artifactId>cucumber-junit</artifactId>
-            <version>${cucumber.version}</version>
+            <artifactId>cucumber-junit-platform-engine</artifactId>
+            <version>${junitEngine.version}</version>
             <scope>test</scope>
         </dependency>
 
-        <!-- JUnit -->
+        <!-- JUnit Jupiter engine that Surefire boots -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junitJupiter.version}</version>
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>io.github.bonigarcia</groupId>
-            <artifactId>webdrivermanager</artifactId>
-            <version>5.7.0</version> <!-- Use latest available -->
-        </dependency>
 
         <!-- Logging -->
         <dependency>
@@ -69,6 +77,28 @@
             <version>5.0.9</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- pom.xml -->
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-cucumber7-jvm</artifactId>  <!-- or allure-cucumber8-jvm -->
+            <scope>test</scope>
+        </dependency>
+
+        <!-- JUnit‑Platform Suite annotations -->
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-suite</artifactId>
+            <version>1.11.0</version>     <!-- matches JUnit 5.11.x line -->
+            <scope>test</scope>
+        </dependency>
+
+
     </dependencies>
 
     <build>
@@ -78,6 +108,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
+                </configuration>
             </plugin>
 
             <!-- Surefire Plugin for running tests -->
@@ -86,11 +121,40 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
-                    <includes>
-                        <include>**/TestRunner.java</include>
-                    </includes>
+                    <!-- Point surefire to the AspectJ weaver JAR -->
+                    <argLine>-javaagent:${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar</argLine>
                 </configuration>
+
+                <dependencies>
+                    <dependency>
+                        <groupId>org.aspectj</groupId>
+                        <artifactId>aspectjweaver</artifactId>
+                        <version>${aspectj.version}</version>
+                    </dependency>
+                </dependencies>
+
             </plugin>
+
+            <plugin>
+                <groupId>io.qameta.allure</groupId>
+                <artifactId>allure-maven</artifactId>
+                <version>2.15.0</version>
+
+                <!-- plugin‑specific settings -->
+
+                <!-- when and how the plugin should run -->
+                <executions>
+                    <execution>
+                        <id>allure-reports</id>
+                        <phase>verify</phase>        <!-- runs after tests have finished -->
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+
+            </plugin>
+
         </plugins>
     </build>
 

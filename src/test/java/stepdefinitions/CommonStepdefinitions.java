@@ -1,18 +1,18 @@
 package stepdefinitions;
 
+import com.microsoft.playwright.Page;
 import io.cucumber.java.en.When;
-import org.openqa.selenium.WebDriver;
 import pages.CommonPage;
-import utils.DriverManager;
+import utils.PlaywrightFactory;
 
 public class CommonStepdefinitions {
 
-    WebDriver driver;
+    Page page;
     CommonPage commonPage;
 
     public CommonStepdefinitions() {
-        this.driver = DriverManager.getDriver();
-        commonPage = new CommonPage(driver);
+        this.page = PlaywrightFactory.getPage(); // updated method to return Playwright Page
+        commonPage = new CommonPage(page);
     }
 
     @When("User clicks on logout Btn on the page")

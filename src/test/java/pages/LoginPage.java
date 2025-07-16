@@ -1,51 +1,45 @@
 package pages;
 
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.FindBy;
-import org.openqa.selenium.support.PageFactory;
-import utils.WaitUtils;
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.WaitForSelectorState;
 
 public class LoginPage {
 
-    WebDriver driver;
+    private final Page page;
+    private final Locator username;
+    private final Locator password;
+    private final Locator loginButton;
+    private final Locator errorMessage;
 
-    @FindBy(name = "username")
-    private WebElement username;
-
-    @FindBy(name = "password")
-    private WebElement password;
-
-    @FindBy(css = "button[type='submit']")
-    private WebElement loginButton;
-
-    @FindBy(xpath = "//div[@role='alert']//p")
-    private WebElement errorMessage;
-
-    public LoginPage(WebDriver driver) {
-        this.driver = driver;
-        PageFactory.initElements(driver, this); // Initialize WebElements
+    public LoginPage(Page page) {
+        this.page = page;
+        this.username     = page.locator("input[name='username']");
+        this.password     = page.locator("input[name='password']");
+        this.loginButton  = page.locator("button[type='submit']");
+        this.errorMessage = page.locator("//div[@role='alert']//p");
     }
 
     public void enterUsername(String user) {
-        username.sendKeys(user);
+        username.fill(user);          // auto‑waits for visibility & enabled state
     }
 
     public void enterPassword(String pass) {
-        password.sendKeys(pass);
+        password.fill(pass);
     }
 
     public void clickLogin() {
-        loginButton.click();
+        loginButton.click();          // waits for navigation if one occurs
     }
 
     public String getErrorMessage() {
-        return errorMessage.getText();
+        return errorMessage.textContent();
     }
 
     public boolean isOnLoginPage() {
-        WaitUtils.waitForVisibility(driver, username, 10);
-        return username.isDisplayed() && password.isDisplayed();
+        username.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)   // wait until visible
+                .setTimeout(10_000));
+        return username.isVisible() && password.isVisible();
     }
 }
-

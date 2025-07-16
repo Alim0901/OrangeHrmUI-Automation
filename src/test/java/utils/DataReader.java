@@ -6,17 +6,18 @@ import java.util.Properties;
 
 public class DataReader {
 
-    private static Properties prop;
+    private static final Properties prop = new Properties();
+    private static final String DATA_FILE_PATH = "src/test/resources/data/testdata.properties";
+
+    static {
+        try (FileInputStream fis = new FileInputStream(DATA_FILE_PATH)) {
+            prop.load(fis);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not load " + DATA_FILE_PATH, e);
+        }
+    }
 
     public static String get(String key) {
-        if (prop == null) {
-            prop = new Properties();
-            try {
-                prop.load(new FileInputStream("src/test/resources/data/testdata.properties"));
-            } catch (IOException e) {
-                throw new RuntimeException("Could not load testdata.properties", e);
-            }
-        }
         return prop.getProperty(key);
     }
 }
