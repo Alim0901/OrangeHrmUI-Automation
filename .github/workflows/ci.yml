@@ -21,41 +21,41 @@ jobs:
           java-version: '24-ea'
           check-latest: true
 
-      # 3️⃣ Cache Maven repo
+      # 3️⃣ Cache Maven repository
       - uses: actions/cache@v4
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      # 4️⃣ Run tests (generates allure-results)
-      - run: mvn -B clean test
+      # 4️⃣ Run tests and generate Allure report
+      - run: mvn clean verify
 
-      # 5️⃣ Upload allure-results only (no HTML report)
-      - name: Archive Allure Results
+      # 5️⃣ Upload Allure HTML report as artifact
+      - name: Archive Allure HTML report
         uses: actions/upload-artifact@v4
         with:
-          name: allure-results
-          path: target/allure-results
+          name: allure-html
+          path: target/site/allure-maven-plugin
 
   publish-pages:
     needs: test
-    if: github.ref == 'refs/heads/master'   # deploy only from master
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     permissions:
       pages: write
       id-token: write
 
     steps:
-      # 1️⃣ Download the artifact from previous job
+      # 1️⃣ Download Allure HTML report artifact
       - uses: actions/download-artifact@v4
         with:
-          name: allure-results
+          name: allure-html
 
-      # 2️⃣ Move allure-results to folder Pages will serve
+      # 2️⃣ Prepare for GitHub Pages
       - run: |
           mkdir public
-          mv target/allure-results public/allure-results
+          mv target/site/allure-maven-plugin/* public/
 
       # 3️⃣ Configure GitHub Pages and deploy
       - uses: actions/configure-pages@v5
@@ -64,12 +64,11 @@ jobs:
           path: public
       - uses: actions/deploy-pages@v4
 
-      # 4️⃣ Comment with raw report link (optional)
+      # 4️⃣ Comment PR with Allure report link
       - name: Comment with report link
         if: ${{ github.event_name == 'pull_request' }}
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
-            ✅ **Test run complete!**
-            
-            📦 [Allure Raw Results](https://<username>.github.io/<repo>/allure-results/)
+            ✅ **Allure Report is Ready!**
+            🔗 [View Allure Report](https://<your-username>.github.io/<your-repo>/)
