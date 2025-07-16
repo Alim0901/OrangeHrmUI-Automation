@@ -27,6 +27,9 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
+      # 4️⃣ Install Playwright browsers and dependencies
+      - name: Install Playwright browsers and dependencies
+        run: npx playwright install --with-deps
 
       # 4️⃣ Run tests and generate Allure report
       - run: mvn clean verify
