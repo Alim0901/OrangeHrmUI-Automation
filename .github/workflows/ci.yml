@@ -1,89 +1,42 @@
-name: Playwright‑CI
+name: Run Playwright Tests
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
   pull_request:
-    branches: [ master ]
+    branches:
+      - master
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣  Check out code
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      # 2️⃣  Java 24 EA + Node (Playwright needs Node for browsers)
-      - uses: actions/setup-java@v4
+      - name: Set up Java 24
+        uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '24-ea'
-          check-latest: true
 
-      - uses: actions/setup-node@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: '18'
 
-      # 3️⃣  Cache Maven repo
-      - uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
+      - name: Install dependencies
+        run: |
+          npm ci
+          npx playwright install
 
-      # 4️⃣  Install Playwright browsers
-      - run: npx playwright install --with-deps
+      - name: Run tests and generate Allure results
+        run: mvn clean test
 
-      # 5️⃣  Run tests (creates allure-results & playwright-html-report)
-      - run: mvn -B clean test
-
-      # 6️⃣  Generate Allure HTML (target/site/allure-maven-plugin)
-      - run: mvn allure:report
-
-      # 7️⃣  Upload reports as artifact
-      - name: Archive reports
+      - name: Upload Allure results
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports
-          path: |
-            target/site/allure-maven-plugin
-            playwright-html-report
-
-  publish-pages:
-    needs: test
-    if: github.ref == 'refs/heads/master'   # deploy only from main
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-
-    steps:
-      # 1️⃣  Download the artifact from previous job
-      - uses: actions/download-artifact@v4
-        with:
-          name: test-reports
-
-      # 2️⃣  Collect into a folder Pages will serve
-      - run: |
-          mkdir public
-          mv target/site/allure-maven-plugin public/allure
-
-      # 3️⃣  Configure Pages & upload
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: public
-      - uses: actions/deploy-pages@v4
-
-      # 4️⃣  Comment on PRs with links (runs but is ignored for pushes)
-      - name: Comment with report link
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: thollander/actions-comment-pull-request@v2
-        with:
-          message: |
-            ✅ **Test run complete!**
-            
-            🔗 [Allure Report](https://<username>.github.io/<repo>/allure/)
-
-
+          name: allure-results
+          path: target/allure-results
