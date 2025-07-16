@@ -16,11 +16,10 @@ public class PlaywrightFactory {
     public static Page initBrowser() {
 
         /* --- read config.xml --- */
-        String  browserCfg = XMLConfigLoader.get("browser");        // chrome / chromium / firefox / webkit
+        // chrome / chromium / firefox / webkit
+        String  browserCfg = XMLConfigLoader.get("browser");
         boolean headless   = XMLConfigLoader.getBoolean("headless");
-        String  size       = XMLConfigLoader.get("windowSize");     // e.g. 1920,1080
-        int     width      = Integer.parseInt(size.split(",")[0].trim());
-        int     height     = Integer.parseInt(size.split(",")[1].trim());
+        String windowType = XMLConfigLoader.get("window"); // desktop / mobile / iphone etc.
 
         /* --- create Playwright & browser --- */
         tlPlaywright.set(Playwright.create());
@@ -40,12 +39,40 @@ public class PlaywrightFactory {
         tlBrowser.set(browser);
 
         /* --- create context & page with unified viewport --- */
-        Browser.NewContextOptions ctxOpts = new Browser.NewContextOptions()
-                .setViewportSize(width, height);              // works across all engines
-
+        Browser.NewContextOptions ctxOpts = new Browser.NewContextOptions();
+        // works across all engines
+        if (headless) {
+            // ✅ Always use default CI-safe resolution in headless mode
+            ctxOpts.setViewportSize(1366, 768);
+            System.out.println("[INFO] Headless mode → using default viewport: 1366x768");
+        } else {
+            // ✅ Headed mode → use config value
+            if (windowType == null || windowType.isBlank()) {
+                System.out.println("[INFO] No window type provided → using default (desktop)");
+            } else {
+                switch (windowType.toLowerCase()) {
+                    case "desktop" -> {
+                        // No viewport set → launches full-size in headed mode
+                        System.out.println("[INFO] Window = desktop → no viewport set (uses native resolution)");
+                    }
+                    case "mobile", "iphone" -> {
+                        ctxOpts.setViewportSize(390, 844); // iPhone 13 dimensions
+                        System.out.println("[INFO] Window = mobile → using 390x844");
+                    }
+                    case "pixel" -> {
+                        ctxOpts.setViewportSize(412, 915); // Pixel 6
+                        System.out.println("[INFO] Window = pixel → using 412x915");
+                    }
+                    default -> {
+                        System.out.printf("[WARN] Unknown window type: %s → defaulting to desktop%n", windowType);
+                    }
+                }
+            }
+        }
         tlContext.set(browser.newContext(ctxOpts));
         tlPage.set(tlContext.get().newPage());
 
+        System.out.printf("[INFO] Browser: %s | Headless: %s | Window: %s%n", browserCfg, headless, windowType);
         return tlPage.get();
     }
 

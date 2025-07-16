@@ -3,8 +3,7 @@
     <browser>chrome</browser>
     <headless>true</headless>
     <!-- window size is used when run on headless mode, otherwise will maximise to screen resolution -->
-    <windowSize>1920,1080</windowSize>
-    <implicitWait>60</implicitWait>
+    <window>desktop</window>
     <ScreenShotOnFail>true</ScreenShotOnFail>
     <ScreenShotOnPass>true</ScreenShotOnPass>
 </configuration>
