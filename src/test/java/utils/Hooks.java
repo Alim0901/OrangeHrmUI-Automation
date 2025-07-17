@@ -5,7 +5,7 @@ import com.aventstack.extentreports.Status;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.ScreenshotType;
 import io.cucumber.java.*;
-
+import io.cucumber.java.Scenario;
 import java.nio.file.Paths;
 import java.util.Base64;
 
@@ -28,6 +28,10 @@ public class Hooks {
 
     @Before
     public void setUp(Scenario sc) {
+
+        System.out.println("⏱ Running scenario: " + sc.getName() +
+                " | Thread: " + Thread.currentThread().getName() +
+                " | Time: " + java.time.LocalTime.now());
         // create browser/context/page for this thread
         PlaywrightFactory.initBrowser();   // or true/false as you wish
         // Extent hierarchy

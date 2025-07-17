@@ -35,8 +35,14 @@ jobs:
       - name: Install Playwright browsers and dependencies
         run: npx playwright install --with-deps
 
+      - name: Check CPU and Java Info
+        run: |
+          echo "CPU cores available: $(nproc)"
+          java -version
+
       # 4️⃣ Run tests and generate Allure report
-      - run: mvn clean verify
+      - name: Run tests
+        run: mvn -X verify
 
       # 5️⃣ Upload Allure HTML report as artifact
       - name: Archive Allure HTML report
