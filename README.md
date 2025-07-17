@@ -10,15 +10,15 @@ This framework is built using Java 17 and is compatible with Java 17 or later ve
 
 ## 🚀 Tools & Libraries
 
-| Tool/Library         | Purpose                                      |
-|----------------------|----------------------------------------------|
-| Java 17              | Core programming language                    |
-| Maven                | Build & dependency management                |
-| Selenium WebDriver   | UI automation                                |
-| Cucumber             | BDD and feature file execution               |
-| JUnit                | Test runner                                  |
-| ExtentReports        | Rich HTML reports with screenshots           |
-| WebDriverManager     | (Optional) To manage driver binaries         |
+| Tool/Library         | Purpose                                                    |
+|----------------------|------------------------------------------------------------|
+| Java 24              | Core programming language                                  |
+| Maven                | Build & dependency management                              |
+| Playwright for Java  | UI automation                                              |
+| Cucumber             | BDD and feature file execution                             |
+| JUnit                | Test runner                                                |
+| ExtentReports        | Rich HTML reports with screenshots & Allure reports for CI |
+
 
 ---
 
@@ -28,7 +28,7 @@ This framework is built using Java 17 and is compatible with Java 17 or later ve
    ```bash
    git clone <your-repo-url>
    cd <project-folder>
-2. **Install java 17 0r above version**
+2. **Install java 24 0r above version**
 3. **Install Cucumber Java & Gherkin Plugins from IDE settings**
 
 ## 🧪 Running Tests
