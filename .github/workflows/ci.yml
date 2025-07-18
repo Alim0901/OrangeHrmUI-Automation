@@ -71,22 +71,26 @@ jobs:
 
     steps:
       # 1️⃣ Download Allure HTML report artifact
-      - uses: actions/download-artifact@v4
+      - name: Download Allure HTML report artifact
+        uses: actions/download-artifact@v4
         with:
           path: temp-allure
 
+      - name: Debug downloaded artifact
+        run: ls -R temp-allure
+
       - name: Clean public folder
-        run: rm -rf public/*
+        run: rm -rf public/* || true
 
       - name: Move report files to public
         run: |
-          mkdir public
-          mv temp-allure/allure-html/* public/
+          mkdir -p public
+          mv temp-allure/allure-html-*/** public/
 
       - name: Debug public folder
         run: ls -R public
-          
-          # 2️⃣ Configure GitHub Pages
+
+        # 2️⃣ Configure GitHub Pages
       - uses: actions/configure-pages@v5
 
       # 3️⃣ Upload pages artifact
