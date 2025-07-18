@@ -81,7 +81,10 @@ jobs:
       - name: Move report files to public
         run: |
           mkdir public
-          mv temp-allure/* public/      
+          mv temp-allure/allure-html/* public/
+
+      - name: Debug public folder
+        run: ls -R public
           
           # 2️⃣ Configure GitHub Pages
       - uses: actions/configure-pages@v5
