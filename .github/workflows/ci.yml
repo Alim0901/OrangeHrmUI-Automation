@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ master ]
   schedule:
-    - cron: '30 6 * * *'  # 4:15 PM AEST
+    - cron: '20 7 * * *'  # 4:15 PM AEST
   workflow_dispatch:      # ✅ Add this to allow manual trigger
 permissions:
   contents: read
