@@ -75,11 +75,15 @@ jobs:
         with:
           path: temp-allure
 
+      - name: Clean public folder
+        run: rm -rf public/*
+
       - name: Move report files to public
         run: |
-          rsync -a --delete temp-allure/ public/      
-
-      # 2️⃣ Configure GitHub Pages
+          mkdir public
+          mv temp-allure/* public/      
+          
+          # 2️⃣ Configure GitHub Pages
       - uses: actions/configure-pages@v5
 
       # 3️⃣ Upload pages artifact
