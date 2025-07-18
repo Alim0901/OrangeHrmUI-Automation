@@ -6,13 +6,16 @@ on:
   pull_request:
     branches: [ master ]
 
-    permissions:
-      contents: read
-      pull-requests: write
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tag: ["@smoke", "@regression"]
 
     steps:
       # 1️⃣ Checkout code
@@ -31,7 +34,14 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      # 4️⃣ Install Playwright browsers and dependencies
+
+      # 4️⃣ Cache Playwright binaries
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}
+
+      # 5️⃣ Install Playwright browsers and dependencies
       - name: Install Playwright browsers and dependencies
         run: npx playwright install --with-deps
 
@@ -40,15 +50,15 @@ jobs:
           echo "CPU cores available: $(nproc)"
           java -version
 
-      # 4️⃣ Run tests and generate Allure report
-      - name: Run tests
-        run: mvn -X verify
+      # 6️⃣ Run tests by tag and generate Allure report
+      - name: Run tests by tag
+        run: mvn verify -Dcucumber.filter.tags="${{ matrix.tag }}"
 
-      # 5️⃣ Upload Allure HTML report as artifact
+      # 7️⃣ Upload Allure HTML report as artifact
       - name: Archive Allure HTML report
         uses: actions/upload-artifact@v4
         with:
-          name: allure-html
+          name: allure-html-${{ matrix.tag }}
           path: target/site/allure-maven-plugin
 
   publish-pages:
@@ -63,13 +73,12 @@ jobs:
       # 1️⃣ Download Allure HTML report artifact
       - uses: actions/download-artifact@v4
         with:
-          name: allure-html
-          path: public
+          path: temp-allure
 
-          -name: Move report files to public
-          run: |
-                mkdir public
-                mv temp-allure/* public/
+      - name: Move report files to public
+        run: |
+          mkdir public
+          mv temp-allure/*/* public/
 
       # 2️⃣ Configure GitHub Pages
       - uses: actions/configure-pages@v5
