@@ -109,3 +109,45 @@ jobs:
           message: |
             ✅ **Allure Report is Ready!**
             🔗 [View Allure Report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/)
+
+  slack-notification:
+    needs: publish-pages
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout code (to access test result files)
+      - uses: actions/checkout@v4
+
+      # Download Allure artifact
+      - uses: actions/download-artifact@v4
+        with:
+          name: allure-html-@smoke
+          path: allure-report
+
+      - name: Extract test metadata
+        id: metadata
+        run: |
+          summary_file="allure-report/widgets/summary.json"
+          if [ -f "$summary_file" ]; then
+            passed=$(jq '.statistic.passed' $summary_file)
+            failed=$(jq '.statistic.failed' $summary_file)
+            skipped=$(jq '.statistic.skipped' $summary_file)
+            total=$(jq '.statistic.total' $summary_file)
+          else
+            passed=0
+            failed=0
+            skipped=0
+            total=0
+          fi
+
+          echo "passed=$passed" >> $GITHUB_OUTPUT
+          echo "failed=$failed" >> $GITHUB_OUTPUT
+          echo "skipped=$skipped" >> $GITHUB_OUTPUT
+          echo "total=$total" >> $GITHUB_OUTPUT
+
+      - name: Notify Slack
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{
+            \"text\": \"✅ *Test Report Summary*\n• Total: ${{ steps.metadata.outputs.total }}\n• Passed: ${{ steps.metadata.outputs.passed }}\n• Failed: ${{ steps.metadata.outputs.failed }}\n• Skipped: ${{ steps.metadata.outputs.skipped }}\n📄 Report: <https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/>\"
+          }" ${{ secrets.SLACK_WEBHOOK_URL }}
