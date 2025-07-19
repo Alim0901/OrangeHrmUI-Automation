@@ -5,7 +5,6 @@ import com.aventstack.extentreports.Status;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.ScreenshotType;
 import io.cucumber.java.*;
-import io.cucumber.java.Scenario;
 import io.qameta.allure.Allure;
 
 import java.io.ByteArrayInputStream;
@@ -13,7 +12,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Base64;
 
 public class Hooks {
 
@@ -24,23 +22,18 @@ public class Hooks {
 
     public static ExtentTest getTest() { return scenario.get(); }
 
-    /* ───── Helpers ───── */
     private static String featureNameOf(Scenario sc) {
-        String raw = sc.getUri().toString();          // e.g. file:/…/Login.feature
+        String raw = sc.getUri().toString();
         return raw.substring(raw.lastIndexOf('/') + 1).replace(".feature", "");
     }
 
-    /* ───── Cucumber hooks ───── */
-
     @Before
     public void setUp(Scenario sc) {
-
         System.out.println("⏱ Running scenario: " + sc.getName() +
                 " | Thread: " + Thread.currentThread().getName() +
                 " | Time: " + java.time.LocalTime.now());
-        // create browser/context/page for this thread
-        PlaywrightFactory.initBrowser();   // or true/false as you wish
-        // Extent hierarchy
+
+        PlaywrightFactory.initBrowser();
         ExtentTest parent  = extent.createTest(featureNameOf(sc));
         ExtentTest child   = parent.createNode(sc.getName());
         feature.set(parent);
@@ -53,40 +46,39 @@ public class Hooks {
         if (page == null) return;
 
         boolean failed = sc.isFailed();
-        boolean takeShot = (failed && XMLConfigLoader.getBoolean("ScreenShotOnFail"))
-                || (!failed && XMLConfigLoader.getBoolean("ScreenShotOnPass"));
+        boolean takeScreenshot = (failed && XMLConfigLoader.getBoolean("ScreenShotOnFail")) ||
+                (!failed && XMLConfigLoader.getBoolean("ScreenShotOnPass"));
 
-        if (takeShot) {
-            String shotName = sc.getName() + "_step_" + System.currentTimeMillis();
-            byte[] png = page.screenshot(new Page.ScreenshotOptions()
+        if (!takeScreenshot) return;
+
+        String shotName = sc.getName() + "_step_" + System.currentTimeMillis();
+
+        // Take screenshot
+        byte[] png = page.screenshot(new Page.ScreenshotOptions()
+                .setFullPage(true)
+                .setType(ScreenshotType.PNG));
+
+        // Attach to Allure (won't log Hooks class)
+        Allure.addAttachment("Screenshot", "image/png", new ByteArrayInputStream(png), ".png");
+
+        // Save screenshot file for ExtentReports
+        try {
+            Path screenshotsDir = Paths.get("target/screenshots");
+            Files.createDirectories(screenshotsDir);
+            Path screenshotPath = screenshotsDir.resolve(shotName + ".png");
+
+            page.screenshot(new Page.ScreenshotOptions()
+                    .setPath(screenshotPath)
                     .setFullPage(true)
                     .setType(ScreenshotType.PNG));
 
-            // Attach ONLY to Allure (for allure reports)
-            Allure.addAttachment("Step Screenshot", "image/png", new ByteArrayInputStream(png), ".png");
+            getTest().log(failed ? Status.FAIL : Status.INFO, "Screenshot attached")
+                    .addScreenCaptureFromPath(screenshotPath.toString());
 
-            // Save screenshot file for ExtentReports
-            Path screenshotsDir = Paths.get("target/screenshots");
-            try {
-                Files.createDirectories(screenshotsDir); // ensure directory exists
-                Path screenshotPath = screenshotsDir.resolve(shotName + ".png");
-
-                page.screenshot(new Page.ScreenshotOptions()
-                        .setPath(screenshotPath)
-                        .setFullPage(true)
-                        .setType(ScreenshotType.PNG));
-
-                // Attach screenshot to ExtentReports from saved file
-                getTest().log(failed ? Status.FAIL : Status.INFO, "Step Screenshot")
-                        .addScreenCaptureFromPath(screenshotPath.toString(), "Screenshot");
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
-
-
 
     @After
     public void tearDown(Scenario sc) {
@@ -94,6 +86,6 @@ public class Hooks {
         else               getTest().pass("Scenario passed: " + sc.getName());
 
         extent.flush();
-        PlaywrightFactory.closeBrowser();   // closes context, browser, playwright
+        PlaywrightFactory.closeBrowser();
     }
 }
