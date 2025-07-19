@@ -62,13 +62,10 @@ public class Hooks {
                     .setFullPage(true)
                     .setType(ScreenshotType.PNG));
 
-            // Attach to Cucumber
-            sc.attach(png, "image/png", "Step Screenshot");
-
-            // Attach to Allure
+            // Attach ONLY to Allure (for allure reports)
             Allure.addAttachment("Step Screenshot", "image/png", new ByteArrayInputStream(png), ".png");
 
-            // Save to target/screenshots/
+            // Save screenshot file for ExtentReports
             Path screenshotsDir = Paths.get("target/screenshots");
             try {
                 Files.createDirectories(screenshotsDir); // ensure directory exists
@@ -78,16 +75,17 @@ public class Hooks {
                         .setPath(screenshotPath)
                         .setFullPage(true)
                         .setType(ScreenshotType.PNG));
+
+                // Attach screenshot to ExtentReports from saved file
+                getTest().log(failed ? Status.FAIL : Status.INFO, "Step Screenshot")
+                        .addScreenCaptureFromPath(screenshotPath.toString(), "Screenshot");
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-            // Attach to Extent
-            String b64 = Base64.getEncoder().encodeToString(png);
-            getTest().log(failed ? Status.FAIL : Status.INFO, "Step Screenshot")
-                    .addScreenCaptureFromBase64String(b64, "Screenshot");
         }
     }
+
 
 
     @After

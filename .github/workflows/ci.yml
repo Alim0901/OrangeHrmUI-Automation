@@ -155,7 +155,14 @@ jobs:
             \"text\": \"✅ *Test Report Summary*\n• Total: ${{ steps.metadata.outputs.total }}\n• Passed: ${{ steps.metadata.outputs.passed }}\n• Failed: ${{ steps.metadata.outputs.failed }}\n• Skipped: ${{ steps.metadata.outputs.skipped }}\n📄 Report: <https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/>\"
           }" ${{ secrets.SLACK_WEBHOOK_URL }}
 
-       # Upload Allure results to Allure TestOps
+       # Download Allure results to Allure TestOps
+      - name: Download Allure raw results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results
+          path: target/allure-results
+
+      # Upload Allure results to Allure TestOps
       - name: Upload Allure results to Allure TestOps
         env:
           ALLURE_TOKEN: ${{ secrets.ALLURE_TOKEN }}
