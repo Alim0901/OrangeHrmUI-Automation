@@ -162,10 +162,10 @@ jobs:
         run: |
           curl -o allurectl -L https://github.com/allure-framework/allurectl/releases/latest/download/allurectl_linux_amd64
           chmod +x allurectl
-          ./allurectl upload \
-            --results target/allure-results \
+          ./allurectl upload target/allure-results \
             --project-id 1 \
             --launch-name "CI Run - ${{ github.run_number }}" \
             --launch-tags "CI,master" \
-            --url https://ali.testops.cloud \
-            --authorization "ApiToken $ALLURE_TOKEN"
+            --endpoint https://ali.testops.cloud \
+            --token $ALLURE_TOKEN
+      
