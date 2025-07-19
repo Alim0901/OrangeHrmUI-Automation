@@ -5,17 +5,15 @@ import com.aventstack.extentreports.reporter.ExtentSparkReporter;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.ScreenshotType;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class ReportScreenshotUtils {
 
     private static ExtentReports extent;
+    private static final String REPORTING_TOOL = XMLConfigLoader.get("ReportingTool").toLowerCase();
 
     /* ───────────── Screenshot helpers ───────────── */
 
@@ -29,7 +27,7 @@ public class ReportScreenshotUtils {
     /** Save screenshot as file (for Extent or archival) and return the path */
     public static String takeScreenshotAsFile(Page page, String scenarioName) {
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmssSSS").format(new Date());
-        String destPath  = "target/screenshots/" + scenarioName + "_" + timestamp + ".png";
+        String destPath = "target/screenshots/" + scenarioName + "_" + timestamp + ".png";
 
         try {
             Path path = Paths.get(destPath);
@@ -50,12 +48,17 @@ public class ReportScreenshotUtils {
     /* ───────────── ExtentReports singleton ───────────── */
 
     public static ExtentReports getInstance() {
+        if (!REPORTING_TOOL.equals("html")) {
+            return null;
+        }
+
         if (extent == null) {
             ExtentSparkReporter spark = new ExtentSparkReporter("target/ExtentReport.html");
             extent = new ExtentReports();
             extent.attachReporter(spark);
             extent.setSystemInfo("Framework", "Playwright + Cucumber");
         }
+
         return extent;
     }
 }

@@ -6,4 +6,8 @@
     <window>desktop</window>
     <ScreenShotOnFail>true</ScreenShotOnFail>
     <ScreenShotOnPass>true</ScreenShotOnPass>
+    <ReportingTool>allure</ReportingTool>
+    <!--✅ Control the report via:
+* mvn verify -DrunAllure=true → Allure report
+* mvn verify (default to HTML) → HTML report -->
 </configuration>

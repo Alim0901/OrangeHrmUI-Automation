@@ -5,6 +5,7 @@ import com.aventstack.extentreports.Status;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.ScreenshotType;
 import io.cucumber.java.*;
+import io.cucumber.java.Scenario;
 import io.qameta.allure.Allure;
 
 import java.io.ByteArrayInputStream;
@@ -15,7 +16,6 @@ import java.nio.file.Paths;
 
 public class Hooks {
 
-    /* ───── ExtentReports plumbing ───── */
     private static final ExtentReports extent = ReportScreenshotUtils.getInstance();
     private static final ThreadLocal<ExtentTest> feature  = new ThreadLocal<>();
     private static final ThreadLocal<ExtentTest> scenario = new ThreadLocal<>();
@@ -34,10 +34,13 @@ public class Hooks {
                 " | Time: " + java.time.LocalTime.now());
 
         PlaywrightFactory.initBrowser();
-        ExtentTest parent  = extent.createTest(featureNameOf(sc));
-        ExtentTest child   = parent.createNode(sc.getName());
-        feature.set(parent);
-        scenario.set(child);
+
+        if (extent != null) {
+            ExtentTest parent  = extent.createTest(featureNameOf(sc));
+            ExtentTest child   = parent.createNode(sc.getName());
+            feature.set(parent);
+            scenario.set(child);
+        }
     }
 
     @AfterStep
@@ -53,39 +56,44 @@ public class Hooks {
 
         String shotName = sc.getName() + "_step_" + System.currentTimeMillis();
 
-        // Take screenshot
+        // Take screenshot bytes
         byte[] png = page.screenshot(new Page.ScreenshotOptions()
                 .setFullPage(true)
                 .setType(ScreenshotType.PNG));
 
-        // Attach to Allure (won't log Hooks class)
+        // Attach to Allure (does not log Hooks class in steps)
         Allure.addAttachment("Screenshot", "image/png", new ByteArrayInputStream(png), ".png");
 
-        // Save screenshot file for ExtentReports
-        try {
-            Path screenshotsDir = Paths.get("target/screenshots");
-            Files.createDirectories(screenshotsDir);
-            Path screenshotPath = screenshotsDir.resolve(shotName + ".png");
+        // If ExtentReports enabled, save file and attach
+        if (extent != null) {
+            try {
+                Path screenshotsDir = Paths.get("target/screenshots");
+                Files.createDirectories(screenshotsDir);
+                Path screenshotPath = screenshotsDir.resolve(shotName + ".png");
 
-            page.screenshot(new Page.ScreenshotOptions()
-                    .setPath(screenshotPath)
-                    .setFullPage(true)
-                    .setType(ScreenshotType.PNG));
+                page.screenshot(new Page.ScreenshotOptions()
+                        .setPath(screenshotPath)
+                        .setFullPage(true)
+                        .setType(ScreenshotType.PNG));
 
-            getTest().log(failed ? Status.FAIL : Status.INFO, "Screenshot attached")
-                    .addScreenCaptureFromPath(screenshotPath.toString());
+                getTest().log(failed ? Status.FAIL : Status.INFO, "Screenshot attached")
+                        .addScreenCaptureFromPath(screenshotPath.toString());
 
-        } catch (IOException e) {
-            e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     @After
     public void tearDown(Scenario sc) {
-        if (sc.isFailed()) getTest().fail("Scenario failed: " + sc.getName());
-        else               getTest().pass("Scenario passed: " + sc.getName());
+        if (extent != null && getTest() != null) {
+            if (sc.isFailed()) getTest().fail("Scenario failed: " + sc.getName());
+            else               getTest().pass("Scenario passed: " + sc.getName());
 
-        extent.flush();
+            extent.flush();
+        }
+
         PlaywrightFactory.closeBrowser();
     }
 }

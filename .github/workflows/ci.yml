@@ -55,7 +55,7 @@ jobs:
 
       # 6️⃣ Run tests by tag and generate Allure report
       - name: Run tests by tag
-        run: mvn verify -Dcucumber.filter.tags="${{ matrix.tag }}"
+        run: mvn verify -Dcucumber.filter.tags="${{ matrix.tag }}" -DrunAllure=true
 
       # 7️⃣ Upload Allure HTML report as artifact
       - name: Archive Allure HTML report
