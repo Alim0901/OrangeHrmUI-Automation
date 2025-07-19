@@ -6,6 +6,12 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.ScreenshotType;
 import io.cucumber.java.*;
 import io.cucumber.java.Scenario;
+import io.qameta.allure.Allure;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
 
@@ -43,11 +49,11 @@ public class Hooks {
 
     @AfterStep
     public void afterEachStep(Scenario sc) {
-        Page page = PlaywrightFactory.getPage();          // fetch after it exists
-        if (page == null) return;                         // safety guard
+        Page page = PlaywrightFactory.getPage();
+        if (page == null) return;
 
-        boolean failed   = sc.isFailed();
-        boolean takeShot = (failed  && XMLConfigLoader.getBoolean("ScreenShotOnFail"))
+        boolean failed = sc.isFailed();
+        boolean takeShot = (failed && XMLConfigLoader.getBoolean("ScreenShotOnFail"))
                 || (!failed && XMLConfigLoader.getBoolean("ScreenShotOnPass"));
 
         if (takeShot) {
@@ -56,17 +62,33 @@ public class Hooks {
                     .setFullPage(true)
                     .setType(ScreenshotType.PNG));
 
-            sc.attach(png, "image/png", "Step Screenshot");        // Cucumber
-            String b64 = Base64.getEncoder().encodeToString(png);  // Extent
+            // Attach to Cucumber
+            sc.attach(png, "image/png", "Step Screenshot");
+
+            // Attach to Allure
+            Allure.addAttachment("Step Screenshot", "image/png", new ByteArrayInputStream(png), ".png");
+
+            // Save to target/screenshots/
+            Path screenshotsDir = Paths.get("target/screenshots");
+            try {
+                Files.createDirectories(screenshotsDir); // ensure directory exists
+                Path screenshotPath = screenshotsDir.resolve(shotName + ".png");
+
+                page.screenshot(new Page.ScreenshotOptions()
+                        .setPath(screenshotPath)
+                        .setFullPage(true)
+                        .setType(ScreenshotType.PNG));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            // Attach to Extent
+            String b64 = Base64.getEncoder().encodeToString(png);
             getTest().log(failed ? Status.FAIL : Status.INFO, "Step Screenshot")
                     .addScreenCaptureFromBase64String(b64, "Screenshot");
-
-            page.screenshot(new Page.ScreenshotOptions()           // archive file
-                    .setPath(Paths.get("screenshots/" + shotName + ".png"))
-                    .setFullPage(true)
-                    .setType(ScreenshotType.PNG));
         }
     }
+
 
     @After
     public void tearDown(Scenario sc) {

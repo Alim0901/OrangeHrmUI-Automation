@@ -5,6 +5,7 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+
   schedule:
     - cron: '20 7 * * *'  # 4:15 PM AEST
   workflow_dispatch:      # ✅ Add this to allow manual trigger
@@ -153,3 +154,18 @@ jobs:
           --data "{
             \"text\": \"✅ *Test Report Summary*\n• Total: ${{ steps.metadata.outputs.total }}\n• Passed: ${{ steps.metadata.outputs.passed }}\n• Failed: ${{ steps.metadata.outputs.failed }}\n• Skipped: ${{ steps.metadata.outputs.skipped }}\n📄 Report: <https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/>\"
           }" ${{ secrets.SLACK_WEBHOOK_URL }}
+
+       # Upload Allure results to Allure TestOps
+      - name: Upload Allure results to Allure TestOps
+        env:
+          ALLURE_TOKEN: ${{ secrets.ALLURE_TOKEN }}
+        run: |
+          curl -o allurectl -L https://github.com/allure-framework/allurectl/releases/latest/download/allurectl_linux_amd64
+          chmod +x allurectl
+          ./allurectl upload \
+            --results target/allure-results \
+            --project-id 1 \
+            --launch-name "CI Run - ${{ github.run_number }}" \
+            --launch-tags "CI,master" \
+            --url https://ali.testops.cloud \
+            --authorization "ApiToken $ALLURE_TOKEN"
